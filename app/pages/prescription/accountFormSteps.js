@@ -4,6 +4,8 @@ import { useFormContext, Controller } from 'react-hook-form';
 import { Box } from 'rebass/styled-components';
 import bows from 'bows';
 import InputMask from 'react-input-mask';
+import { useStateMachine } from 'little-state-machine';
+import isEmpty from 'lodash/isEmpty';
 
 import { fieldsAreValid, getFieldError } from '../../core/forms';
 import i18next from '../../core/language';
@@ -13,11 +15,14 @@ import { Caption, Headline } from '../../components/elements/FontStyles';
 import { typeOptions } from './prescriptionFormConstants';
 import { fieldsetStyles, condensedInputStyles } from './prescriptionFormStyles';
 
+
 const t = i18next.t.bind(i18next);
 const log = bows('PrescriptionAccount');
 
 export const AccountType = translate()(props => {
   const { t, meta } = props;
+  const { state } = useStateMachine();
+  console.log('state.prescription.type', state.prescription.type);
 
   return (
     <Box {...fieldsetStyles}>
@@ -27,6 +32,7 @@ export const AccountType = translate()(props => {
         variant="verticalBordered"
         id="type"
         name="type"
+        value={!isEmpty(meta.type.value) ? meta.type.value : state.prescription.type}
         options={typeOptions}
         error={getFieldError(meta.type)}
       />
@@ -36,15 +42,20 @@ export const AccountType = translate()(props => {
 
 export const PatientInfo = translate()(props => {
   const { t, meta } = props;
+  const { state: { prescription } } = useStateMachine();
 
   const {
     getValues,
     setValue,
+    control,
+    register
   } = useFormContext();
 
   const dateFormatRegex = /^(.*)[-|/](.*)[-|/](.*)$/;
   const dateInputFormat = 'MM/DD/YYYY';
   const maskFormat = dateInputFormat.replace(/[A-Z]/g, '9');
+
+  console.log('prescription.lastName', prescription.lastName);
 
   return (
     <Box {...fieldsetStyles}>
@@ -54,6 +65,7 @@ export const PatientInfo = translate()(props => {
         label={t('First Name')}
         id="firstName"
         name="firstName"
+        value={prescription.firstName}
         error={getFieldError(meta.firstName)}
         {...condensedInputStyles}
       />
@@ -62,6 +74,9 @@ export const PatientInfo = translate()(props => {
         label={t('Last Name')}
         id="lastName"
         name="lastName"
+        defaultValue={prescription.lastName}
+        control={control}
+        ref={register}
         error={getFieldError(meta.lastName)}
         {...condensedInputStyles}
       />
@@ -123,24 +138,24 @@ export const PatientEmail = translate()(props => {
   );
 });
 
-const accountFormSteps = (meta, validationSchema) => ({
+const accountFormSteps = (meta, onSubStepComplete) => ({
   label: t('Create Patient Account'),
   subSteps: [
     {
       disableComplete: !fieldsAreValid(['type'], meta),
       hideBack: true,
-      onComplete: () => log('Account Type Complete'),
+      onComplete: onSubStepComplete,
       panelContent: <AccountType meta={meta} />
     },
     {
       disableComplete: !fieldsAreValid(['firstName', 'lastName', 'birthday'], meta),
-      onComplete: () => log('Patient Info Complete'),
+      onComplete: onSubStepComplete,
       panelContent: <PatientInfo meta={meta} />,
     },
     {
       disableComplete: !fieldsAreValid(['email', 'emailConfirm'], meta),
-      onComplete: () => log('Patient Email Complete'),
-      panelContent: <PatientEmail meta={meta} validationSchema={validationSchema} />,
+      onComplete: onSubStepComplete,
+      panelContent: <PatientEmail meta={meta}  />,
     },
   ],
 });

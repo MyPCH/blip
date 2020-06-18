@@ -4,6 +4,7 @@ import { Box, Flex, Text } from 'rebass/styled-components';
 import { Radio as Base, RadioProps, Label } from '@rebass/forms';
 import styled from 'styled-components';
 import map from 'lodash/map';
+import isEmpty from 'lodash/isEmpty';
 import cx from 'classnames';
 
 import { Caption } from './FontStyles';

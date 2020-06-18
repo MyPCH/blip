@@ -104,6 +104,8 @@
     "karma-webpack": "4.0.2",
     "less": "3.8.1",
     "less-loader": "4.1.0",
+    "little-state-machine": "^3.0.2",
+    "little-state-machine-devtools": "^1.0.0",
     "lodash": "4.17.10",
     "material-ui-popup-state": "1.5.3",
     "mini-css-extract-plugin": "0.5.0",

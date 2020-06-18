@@ -4,6 +4,10 @@ import { translate } from 'react-i18next';
 import bows from 'bows';
 import { Controller, useForm, FormContext } from 'react-hook-form';
 import { DevTool } from '@hookform/devtools';
+
+import { StateMachineProvider, createStore, useStateMachine } from 'little-state-machine';
+import { DevTool as StateMachineDevTool } from 'little-state-machine-devtools';
+
 import get from 'lodash/get';
 
 import { getFieldsMeta } from '../../core/forms';
@@ -13,6 +17,7 @@ import accountFormSteps from './accountFormSteps';
 import profileFormSteps from './profileFormSteps';
 import therapySettingsFormSteps from './therapySettingsFormSteps';
 import { defaultUnits, defaultValues, validCountryCodes } from './prescriptionFormConstants';
+import { updatePrescription } from './prescriptionFormActions';
 
 import Checkbox from '../../components/elements/Checkbox';
 import Stepper from '../../components/elements/Stepper';
@@ -21,12 +26,21 @@ import Stepper from '../../components/elements/Stepper';
 
 const log = bows('PrescriptionForm');
 
+// create a prescription store for sessionStorage persistance
+createStore({
+  prescription: {},
+});
+
 const withPrescription = Component => props => {
   // Until backend service is ready, get prescriptions from localStorage
   const [prescriptions] = useLocalStorage('prescriptions', {});
 
+  const { action: updatePrescriptionAction } = useStateMachine(updatePrescription);
+
   const id = get(props, 'routeParams.id', '');
-  const prescription = get(prescriptions, id);
+  const prescription = get(prescriptions, id, {});
+
+  updatePrescriptionAction(prescription);
 
   return <Component prescription={prescription} {...props} />
 };
@@ -98,7 +112,6 @@ const PrescriptionForm = props => {
 
   const onSubmit = data => console.log(data);
   const values = form.getValues({ nest: true });
-  console.log('values', values);
 
   const getFieldMeta = (fieldKey) => ({
     dirty: form.formState.dirtyFields.has(fieldKey),
@@ -129,6 +142,9 @@ const PrescriptionForm = props => {
       required
     />
   );
+
+  const { action: updatePrescriptionAction } = useStateMachine(updatePrescription);
+  const handleSubStepSubmit = () => updatePrescriptionAction(form.getValues());
 
   const handleStepSubmit = async () => {
     function uuidv4() {
@@ -177,7 +193,7 @@ const PrescriptionForm = props => {
     },
     steps: [
       {
-        ...accountFormSteps(meta, validationSchema),
+        ...accountFormSteps(meta, handleSubStepSubmit),
         onComplete: handleStepSubmit,
         asyncState: stepAsyncState,
       },
@@ -239,15 +255,16 @@ const PrescriptionForm = props => {
   if (prescription || (get(localStorage, storageKey) && activeStepsParam === null)) delete localStorage[storageKey];
 
   return (
-    <FormContext {...form}>
-      <form id="prescription-form" onSubmit={form.handleSubmit(onSubmit)}>
-        <Controller as="input" type="hidden" name="id" />
-        <Stepper {...stepperProps} />
-        {/* <Persist name={storageKey} /> */}
-      </form>
-
-      <DevTool control={form.control} />
-    </FormContext>
+    <StateMachineProvider>
+      <StateMachineDevTool />
+      <FormContext {...form}>
+        <form id="prescription-form" onSubmit={form.handleSubmit(onSubmit)}>
+          <Controller as="input" type="hidden" name="id" />
+          <Stepper {...stepperProps} />
+        </form>
+        <DevTool control={form.control} />
+      </FormContext>
+    </StateMachineProvider>
   );
 };
 
