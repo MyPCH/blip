@@ -47,8 +47,6 @@ export const PatientInfo = translate()(props => {
   const {
     getValues,
     setValue,
-    control,
-    register
   } = useFormContext();
 
   const dateFormatRegex = /^(.*)[-|/](.*)[-|/](.*)$/;
@@ -65,7 +63,7 @@ export const PatientInfo = translate()(props => {
         label={t('First Name')}
         id="firstName"
         name="firstName"
-        value={prescription.firstName}
+        defaultValue={prescription.firstName}
         error={getFieldError(meta.firstName)}
         {...condensedInputStyles}
       />
@@ -74,9 +72,7 @@ export const PatientInfo = translate()(props => {
         label={t('Last Name')}
         id="lastName"
         name="lastName"
-        defaultValue={prescription.lastName}
-        control={control}
-        ref={register}
+        value={prescription.lastName}
         error={getFieldError(meta.lastName)}
         {...condensedInputStyles}
       />

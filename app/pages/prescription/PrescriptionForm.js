@@ -42,11 +42,18 @@ const withPrescription = Component => props => {
 
   updatePrescriptionAction(prescription);
 
-  return <Component prescription={prescription} {...props} />
+  return (
+    <StateMachineProvider>
+      <StateMachineDevTool />
+      <Component prescription={prescription} {...props} />
+    </StateMachineProvider>
+  );
 };
 
 const PrescriptionForm = props => {
-  const { t, prescription } = props;
+  const { t } = props;
+
+  const { action: updatePrescriptionAction, state: { prescription } } = useStateMachine(updatePrescription);
 
   const bgUnits = get(prescription, 'initialSettings.bloodGlucoseUnits', defaultUnits.bloodGlucose);
   const pumpId = get(prescription, 'initialSettings.pumpId', '');
@@ -111,7 +118,7 @@ const PrescriptionForm = props => {
   }); // form contains all useForm functions
 
   const onSubmit = data => console.log(data);
-  const values = form.getValues({ nest: true });
+  const values = form.getValues();
 
   const getFieldMeta = (fieldKey) => ({
     dirty: form.formState.dirtyFields.has(fieldKey),
@@ -121,6 +128,7 @@ const PrescriptionForm = props => {
   });
 
   const meta = getFieldsMeta(prescriptionSchema(pumpId, bgUnits), getFieldMeta);
+  console.log('meta', meta);
 
   /* WIP Scaffolding Start */
   const sleep = m => new Promise(r => setTimeout(r, m));
@@ -143,7 +151,6 @@ const PrescriptionForm = props => {
     />
   );
 
-  const { action: updatePrescriptionAction } = useStateMachine(updatePrescription);
   const handleSubStepSubmit = () => updatePrescriptionAction(form.getValues());
 
   const handleStepSubmit = async () => {
@@ -255,16 +262,13 @@ const PrescriptionForm = props => {
   if (prescription || (get(localStorage, storageKey) && activeStepsParam === null)) delete localStorage[storageKey];
 
   return (
-    <StateMachineProvider>
-      <StateMachineDevTool />
-      <FormContext {...form}>
-        <form id="prescription-form" onSubmit={form.handleSubmit(onSubmit)}>
-          <Controller as="input" type="hidden" name="id" />
-          <Stepper {...stepperProps} />
-        </form>
-        <DevTool control={form.control} />
-      </FormContext>
-    </StateMachineProvider>
+    <FormContext {...form}>
+      <form id="prescription-form" onSubmit={form.handleSubmit(onSubmit)}>
+        <Controller as="input" type="hidden" name="id" />
+        <Stepper {...stepperProps} />
+      </form>
+      <DevTool control={form.control} />
+    </FormContext>
   );
 };
 
