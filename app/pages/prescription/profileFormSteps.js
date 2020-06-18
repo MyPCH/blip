@@ -1,6 +1,6 @@
 import React from 'react';
 import { translate } from 'react-i18next';
-import { FastField, useFormikContext } from 'formik';
+import { useFormContext, Controller } from 'react-hook-form';
 import { Box, Flex } from 'rebass/styled-components';
 import bows from 'bows';
 import isEmpty from 'lodash/isEmpty';
@@ -23,22 +23,25 @@ export const PatientPhone = translate()(props => {
   const { t, meta } = props;
 
   const {
-    setFieldValue,
-    setFieldTouched,
-  } = useFormikContext();
+    getValues,
+    setValue,
+  } = useFormContext();
+
+  console.log('getValues(\'phoneNumber\')', getValues('phoneNumber'));
+  console.log('meta.phoneNumber.number', meta.phoneNumber.number.value);
 
   return (
     <Box {...fieldsetStyles}>
       <Headline mb={4}>{t('What is the patient\'s phone number?')}</Headline>
-      <FastField
+      <Controller
+        name="phoneNumber.number"
         as={() => (
           <InputMask
             mask="(999) 999-9999"
             alwaysShowMask
             defaultValue={meta.phoneNumber.number.value}
             onBlur={e => {
-              setFieldTouched('phoneNumber.number', true);
-              setFieldValue('phoneNumber.number', e.target.value);
+              setValue('phoneNumber.number', e.target.value, true);
             }}
           >
             <TextInput
@@ -64,7 +67,7 @@ export const PatientMRN = translate()(props => {
   return (
     <Box {...fieldsetStyles}>
       <Headline mb={4}>{t('What is the patient\'s Medical Record Number (MRN)?')}</Headline>
-      <FastField
+      <Controller
         as={TextInput}
         label={t('Medical Record Number')}
         id="mrn"
@@ -82,7 +85,7 @@ export const PatientGender = translate()(props => {
   return (
     <Box {...fieldsetStyles}>
       <Headline mb={4}>{t('What is the patient\'s gender?')}</Headline>
-      <FastField
+      <Controller
         as={RadioGroup}
         variant="verticalBordered"
         id="sex"
@@ -98,8 +101,8 @@ export const PatientDevices = translate()(props => {
   const { t, meta } = props;
 
   const {
-    setFieldValue,
-  } = useFormikContext();
+    setValue,
+  } = useFormContext();
 
   return (
     <Box {...fieldsetStyles}>
@@ -107,7 +110,7 @@ export const PatientDevices = translate()(props => {
       <Flex {...checkboxGroupStyles}>
         {map(pumpDeviceOptions, device => (
           <React.Fragment key={device.value}>
-            <FastField
+            <Controller
               as={Checkbox}
               id="initialSettings.pumpId"
               name="initialSettings.pumpId"
@@ -115,7 +118,7 @@ export const PatientDevices = translate()(props => {
               checked={!isEmpty(meta.initialSettings.pumpId.value)}
               label={device.label}
               onChange={e => {
-                setFieldValue('initialSettings.pumpId', e.target.checked ? device.value : '')
+                setValue('initialSettings.pumpId', e.target.checked ? device.value : '')
               }}
               error={getFieldError(meta.initialSettings.pumpId)}
               {...checkboxStyles}
@@ -127,14 +130,14 @@ export const PatientDevices = translate()(props => {
       <Flex {...checkboxGroupStyles}>
         {map(cgmDeviceOptions, device => (
           <React.Fragment key={device.value}>
-            <FastField
+            <Controller
               as={Checkbox}
               id="initialSettings.cgmType"
               name="initialSettings.cgmType"
               checked={!isEmpty(meta.initialSettings.cgmType.value)}
               label={device.label}
               onChange={e => {
-                setFieldValue('initialSettings.cgmType', e.target.checked ? device.value : '')
+                setValue('initialSettings.cgmType', e.target.checked ? device.value : '')
               }}
               error={getFieldError(meta.initialSettings.cgmType)}
               {...checkboxStyles}

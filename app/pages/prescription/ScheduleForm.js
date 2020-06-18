@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { translate } from 'react-i18next';
-import { FastField, Field } from 'formik';
+import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import { Box, Flex, Text, BoxProps } from 'rebass/styled-components';
 import map from 'lodash/map';
 import isInteger from 'lodash/isInteger';
@@ -9,7 +9,6 @@ import sortedLastIndexBy from 'lodash/sortedLastIndexBy';
 import DeleteOutlineRoundedIcon from '@material-ui/icons/DeleteOutlineRounded';
 
 import { getFieldError, getThresholdWarning } from '../../core/forms';
-import { useFieldArray } from '../../core/hooks';
 import i18next from '../../core/language';
 import TextInput from '../../components/elements/TextInput';
 import Icon from '../../components/elements/Icon';
@@ -41,11 +40,14 @@ const ScheduleForm = props => {
     ...boxProps
   } = props;
 
+
+  const { control } = useFormContext();
+
   const [refs, setRefs] = React.useState([]);
   const [focusedId, setFocusedId] = React.useState();
 
-  const [schedules, , { move, remove, replace, push }] = useFieldArray({ name: fieldArrayName });
-  const schedulesLength = schedules.value.length;
+  const { fields: schedules, move, remove, insert, append } = useFieldArray({ control, name: fieldArrayName });
+  const schedulesLength = schedules.length;
 
   React.useEffect(() => {
     // add or remove refs as the schedule length changes
@@ -60,9 +62,9 @@ const ScheduleForm = props => {
 
   return (
     <Box {...boxProps}>
-      {map(schedules.value, (schedule, index) => (
+      {map(schedules, (schedule, index) => (
         <Flex key={index} alignItems="flex-start" mb={3}>
-          <Field
+          <Controller
             as={TextInput}
             label={index === 0 && t('Start Time')}
             type="time"
@@ -71,11 +73,12 @@ const ScheduleForm = props => {
             value={convertMsPer24ToTimeString(schedule.start, 'hh:mm')}
             onChange={e => {
               const start = convertTimeStringToMsPer24(e.target.value);
-              const newValue = {...schedules.value[index], start};
-              const valuesCopy = [...schedules.value];
+              const newValue = {...schedules[index], start};
+              const valuesCopy = [...schedules];
               valuesCopy.splice(index, 1);
               const newPos = sortedLastIndexBy(valuesCopy, newValue, function(o) { return o.start; });
-              replace(index, newValue);
+              remove(index);
+              insert(index, newValue);
               move(index, newPos);
               setFocusedId(newPos);
             }}
@@ -89,7 +92,7 @@ const ScheduleForm = props => {
           />
           {map(fields, (field, fieldIndex) => (
             <React.Fragment key={fieldIndex}>
-              <FastField
+              <Controller
                 as={TextInput}
                 label={index === 0 && field.label}
                 min={field.min}
@@ -125,12 +128,12 @@ const ScheduleForm = props => {
       <Button
         variant="secondary"
         disabled={(() => {
-          const lastSchedule = schedules.value[schedules.value.length - 1];
+          const lastSchedule = schedules[schedules.length - 1];
           return lastSchedule.start >= (MS_IN_DAY - (MS_IN_MIN * 30));
         })()}
         onClick={() => {
-          const lastSchedule = schedules.value[schedules.value.length - 1];
-          return push({
+          const lastSchedule = schedules[schedules.length - 1];
+          return append({
             ...lastSchedule,
             start: lastSchedule.start + (MS_IN_MIN * 30),
           });

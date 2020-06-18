@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { translate } from 'react-i18next';
-import { FastField } from 'formik';
+import { Controller } from 'react-hook-form';
 import { Box, Text, BoxProps } from 'rebass/styled-components';
 import bows from 'bows';
 
@@ -73,7 +73,7 @@ export const PatientTraining = props => {
           pumpId: pumpMeta.manufacturerName,
         })}
       </Body2>
-      <FastField
+      <Controller
         as={RadioGroup}
         variant="vertical"
         id="training"
@@ -162,7 +162,7 @@ export const GlucoseSettings = props => {
               </Box>
             )}
           />
-          <FastField
+          <Controller
             as={TextInput}
             type="number"
             id="initialSettings.suspendThreshold.value"
@@ -218,7 +218,7 @@ export const InsulinSettings = props => {
             </Box>
           )}
         />
-        <FastField
+        <Controller
           as={RadioGroup}
           variant="horizontal"
           id="initialSettings.insulinType"
@@ -243,7 +243,7 @@ export const InsulinSettings = props => {
             </Box>
           )}
         />
-        <FastField
+        <Controller
           as={TextInput}
           type="number"
           id="initialSettings.basalRateMaximum.value"
@@ -266,7 +266,7 @@ export const InsulinSettings = props => {
             </Box>
           )}
         />
-        <FastField
+        <Controller
           as={TextInput}
           type="number"
           id="initialSettings.bolusAmountMaximum.value"

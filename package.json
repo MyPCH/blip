@@ -41,6 +41,7 @@
     "@babel/polyfill": "7.0.0",
     "@babel/preset-env": "7.1.0",
     "@babel/preset-react": "7.0.0",
+    "@hookform/devtools": "^1.2.1",
     "@hot-loader/react-dom": "16.11.0",
     "@material-ui/core": "4.9.10",
     "@material-ui/icons": "4.9.1",

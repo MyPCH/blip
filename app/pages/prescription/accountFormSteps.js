@@ -1,6 +1,6 @@
 import React from 'react';
 import { translate } from 'react-i18next';
-import { FastField, useFormikContext } from 'formik';
+import { useFormContext, Controller } from 'react-hook-form';
 import { Box } from 'rebass/styled-components';
 import bows from 'bows';
 import InputMask from 'react-input-mask';
@@ -22,7 +22,7 @@ export const AccountType = translate()(props => {
   return (
     <Box {...fieldsetStyles}>
       <Headline mb={4}>{t('Who are you creating your account for?')}</Headline>
-      <FastField
+      <Controller
         as={RadioGroup}
         variant="verticalBordered"
         id="type"
@@ -38,9 +38,9 @@ export const PatientInfo = translate()(props => {
   const { t, meta } = props;
 
   const {
-    setFieldValue,
-    setFieldTouched,
-  } = useFormikContext();
+    getValues,
+    setValue,
+  } = useFormContext();
 
   const dateFormatRegex = /^(.*)[-|/](.*)[-|/](.*)$/;
   const dateInputFormat = 'MM/DD/YYYY';
@@ -49,7 +49,7 @@ export const PatientInfo = translate()(props => {
   return (
     <Box {...fieldsetStyles}>
       <Headline mb={4}>{t('Please enter patient\'s name and birthdate')}</Headline>
-      <FastField
+      <Controller
         as={TextInput}
         label={t('First Name')}
         id="firstName"
@@ -57,7 +57,7 @@ export const PatientInfo = translate()(props => {
         error={getFieldError(meta.firstName)}
         {...condensedInputStyles}
       />
-      <FastField
+      <Controller
         as={TextInput}
         label={t('Last Name')}
         id="lastName"
@@ -65,16 +65,16 @@ export const PatientInfo = translate()(props => {
         error={getFieldError(meta.lastName)}
         {...condensedInputStyles}
       />
-      <FastField
+      <Controller
+        name="birthday"
         as={() => (
           <InputMask
             mask={maskFormat}
             maskPlaceholder={dateInputFormat}
             alwaysShowMask
-            defaultValue={meta.birthday.value.replace(dateFormatRegex, '$2/$3/$1')}
+            defaultValue={getValues('birthday').replace(dateFormatRegex, '$2/$3/$1')}
             onBlur={e => {
-              setFieldTouched('birthday', true);
-              setFieldValue('birthday', e.target.value.replace(dateFormatRegex, '$3-$1-$2'))
+              setValue('birthday', e.target.value.replace(dateFormatRegex, '$3-$1-$2'), true)
             }}
           >
             <TextInput
@@ -92,12 +92,15 @@ export const PatientInfo = translate()(props => {
 });
 
 export const PatientEmail = translate()(props => {
-  const { t, meta } = props;
+  const { t, meta, validationSchema } = props;
+  console.log('validationSchema', validationSchema);
 
+  const { errors } = useFormContext({ validationSchema });
+  console.log('errors', errors);
   return (
     <Box {...fieldsetStyles}>
       <Headline mb={4}>{t('What is the patient\'s email address?')}</Headline>
-      <FastField
+      <Controller
         as={TextInput}
         label={t('Email Address')}
         id="email"
@@ -105,7 +108,7 @@ export const PatientEmail = translate()(props => {
         error={getFieldError(meta.email)}
         {...condensedInputStyles}
       />
-      <FastField
+      <Controller
         as={TextInput}
         label={t('Confirm Email Address')}
         id="emailConfirm"
@@ -120,7 +123,7 @@ export const PatientEmail = translate()(props => {
   );
 });
 
-const accountFormSteps = meta => ({
+const accountFormSteps = (meta, validationSchema) => ({
   label: t('Create Patient Account'),
   subSteps: [
     {
@@ -137,7 +140,7 @@ const accountFormSteps = meta => ({
     {
       disableComplete: !fieldsAreValid(['email', 'emailConfirm'], meta),
       onComplete: () => log('Patient Email Complete'),
-      panelContent: <PatientEmail meta={meta} />,
+      panelContent: <PatientEmail meta={meta} validationSchema={validationSchema} />,
     },
   ],
 });
