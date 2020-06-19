@@ -35,25 +35,9 @@ const withPrescription = Component => props => {
   // Until backend service is ready, get prescriptions from localStorage
   const [prescriptions] = useLocalStorage('prescriptions', {});
 
-  const { action: updatePrescriptionAction } = useStateMachine(updatePrescription);
-
   const id = get(props, 'routeParams.id', '');
   const prescription = get(prescriptions, id, {});
 
-  updatePrescriptionAction(prescription);
-
-  return (
-    <StateMachineProvider>
-      <StateMachineDevTool />
-      <Component prescription={prescription} {...props} />
-    </StateMachineProvider>
-  );
-};
-
-const PrescriptionForm = props => {
-  const { t } = props;
-
-  const { action: updatePrescriptionAction, state: { prescription } } = useStateMachine(updatePrescription);
 
   const bgUnits = get(prescription, 'initialSettings.bloodGlucoseUnits', defaultUnits.bloodGlucose);
   const pumpId = get(prescription, 'initialSettings.pumpId', '');
@@ -117,8 +101,29 @@ const PrescriptionForm = props => {
     mode: 'onChange',
   }); // form contains all useForm functions
 
+  return (
+    <StateMachineProvider>
+      <Component prescription={prescription} form={form} {...props} />
+    </StateMachineProvider>
+  );
+};
+
+const PrescriptionForm = props => {
+  const { t, form } = props;
+
+  const { action: updatePrescriptionAction, state: { prescription } } = useStateMachine(updatePrescription);
+
+  React.useEffect(() => {
+    updatePrescriptionAction(props.prescription);
+  }, []);
+
+  const bgUnits = get(prescription, 'initialSettings.bloodGlucoseUnits', defaultUnits.bloodGlucose);
+  const pumpId = get(prescription, 'initialSettings.pumpId', '');
+
   const onSubmit = data => console.log(data);
-  const values = form.getValues();
+  const values = form.getValues({ nest: true });
+
+  console.log('values', values);
 
   const getFieldMeta = (fieldKey) => ({
     dirty: form.formState.dirtyFields.has(fieldKey),
@@ -128,7 +133,6 @@ const PrescriptionForm = props => {
   });
 
   const meta = getFieldsMeta(prescriptionSchema(pumpId, bgUnits), getFieldMeta);
-  console.log('meta', meta);
 
   /* WIP Scaffolding Start */
   const sleep = m => new Promise(r => setTimeout(r, m));
@@ -151,7 +155,7 @@ const PrescriptionForm = props => {
     />
   );
 
-  const handleSubStepSubmit = () => updatePrescriptionAction(form.getValues());
+  const handleSubStepSubmit = () => updatePrescriptionAction(form.getValues({ nest: true }));
 
   const handleStepSubmit = async () => {
     function uuidv4() {
@@ -249,17 +253,6 @@ const PrescriptionForm = props => {
       }
     },
   };
-
-  const params = () => new URLSearchParams(location.search);
-  const activeStepParamKey = `${stepperProps.id}-step`;
-  const activeStepsParam = params().get(activeStepParamKey);
-  const storageKey = 'prescriptionForm';
-
-  // When a user comes to this component initially, without the active step and subStep set by the
-  // Stepper component in the url, we delete any persisted state from localStorage.
-  // As well, when editing an existing prescription, we delete it so that the current prescription
-  // values replace whatever values were previously stored
-  if (prescription || (get(localStorage, storageKey) && activeStepsParam === null)) delete localStorage[storageKey];
 
   return (
     <FormContext {...form}>
